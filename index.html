@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BetAlgo Pro Tracker</title>
+    <title>BetAlgo Elite v5</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <style>
@@ -11,186 +11,261 @@
             --bg: #0f172a;
             --accent: #10b981;
             --error: #ef4444;
-            --glass: rgba(30, 41, 59, 0.7);
+            --glass: rgba(30, 41, 59, 0.75);
             --text: #f1f5f9;
         }
 
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background: radial-gradient(circle at bottom left, #1e293b, #0f172a);
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: var(--text);
             margin: 0; padding: 0;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh;
-            -webkit-user-select: none;
         }
 
-        .container {
-            width: 100%; max-width: 450px; padding: 20px; box-sizing: border-box;
-        }
+        .container { width: 100%; max-width: 480px; padding: 20px; box-sizing: border-box; }
 
         .glass-card {
             background: var(--glass);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
-            padding: 20px;
+            border-radius: 28px;
+            padding: 22px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
         }
 
-        .header-stats {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
-        }
+        .progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 15px 0; overflow: hidden; }
+        #progressBar { height: 100%; width: 0%; background: var(--accent); transition: 0.5s ease; }
 
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-box { text-align: center; }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; margin-bottom: 5px; }
-        .stat-value { font-size: 22px; font-weight: 800; color: var(--accent); }
+        .stat-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 5px; }
+        .stat-value { font-size: 24px; font-weight: 900; }
 
-        .input-group { margin-top: 15px; }
-        label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 6px; text-transform: uppercase; }
         input {
             width: 100%; background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px; padding: 14px; color: white;
-            font-size: 16px; outline: none; box-sizing: border-box;
-            transition: 0.3s;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: 15px; padding: 15px; color: white;
+            font-size: 16px; outline: none; box-sizing: border-box; margin-top: 10px;
         }
-        input:focus { border-color: var(--accent); background: rgba(15, 23, 42, 1); }
 
-        .main-calc { text-align: center; padding: 25px 0; border: 2px dashed rgba(255,255,255,0.05); margin: 20px 0; border-radius: 24px; }
-        .suggested-bet { font-size: 54px; font-weight: 900; color: #fff; margin: 10px 0; letter-spacing: -2px; }
-        
-        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .main-display { text-align: center; padding: 30px 10px; border-radius: 30px; background: linear-gradient(145deg, rgba(255,255,255,0.03), transparent); margin-bottom: 20px; }
+        .bet-amt { font-size: 58px; font-weight: 900; color: #fff; text-shadow: 0 0 30px rgba(16, 185, 129, 0.3); }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         button {
-            padding: 18px; border: none; border-radius: 16px; font-weight: 800;
-            font-size: 15px; cursor: pointer; transition: transform 0.1s, opacity 0.2s;
-            text-transform: uppercase;
+            padding: 20px; border: none; border-radius: 20px; font-weight: 900;
+            font-size: 16px; cursor: pointer; transition: 0.2s active;
         }
-        button:active { transform: scale(0.96); }
-        
-        .btn-win { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
-        .btn-lose { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
-        .btn-reset { 
-            background: transparent; border: 1px solid rgba(255,255,255,0.1); 
-            color: #64748b; width: 100%; margin-top: 25px; padding: 12px; font-size: 12px;
+        .btn-win { background: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2); }
+        .btn-lose { background: var(--error); color: #fff; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2); }
+
+        /* Istorija i Kalendar stilovi */
+        .history-list { margin-top: 10px; }
+        .history-item { 
+            display: flex; justify-content: space-between; 
+            padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px;
         }
 
-        .history-msg { font-size: 13px; color: #94a3b8; margin-top: 15px; text-align: center; font-style: italic; }
+        .calendar-section {
+            margin-top: 20px;
+        }
+        
+        .calendar-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            border-left: 4px solid #64748b;
+        }
+        
+        .calendar-item.profit { border-left-color: var(--accent); }
+        .calendar-item.loss { border-left-color: var(--error); }
+        .date-badge { font-size: 11px; color: #64748b; font-weight: bold; }
+        
+        .reset-link { color: #475569; font-size: 11px; text-align: center; margin-top: 30px; cursor: pointer; text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="text-align: center; margin-bottom: 25px;">
-        <h2 style="margin:0; font-weight: 800; letter-spacing: -1px;">PROGRESIVNI <span style="color:var(--accent)">BET</span></h2>
-        <span style="font-size: 10px; color: #64748b; text-transform: uppercase;">Sistem za oporavak banke</span>
-    </div>
-
-    <div class="glass-card header-stats">
+    <div class="glass-card stat-grid">
         <div class="stat-box">
-            <div class="stat-label">Trenutno u banci</div>
-            <div id="displayBanka" class="stat-value">0.00</div>
+            <div class="stat-label">Banka</div>
+            <div id="bankaDisp" class="stat-value" style="color:var(--accent)">0</div>
         </div>
         <div class="stat-box">
-            <div class="stat-label">Akumuliran minus</div>
-            <div id="displayMinus" class="stat-value" style="color: var(--error)">0.00</div>
+            <div class="stat-label">U minusu</div>
+            <div id="minusDisp" class="stat-value" style="color:var(--error)">0</div>
+        </div>
+        <div class="progress-container" style="grid-column: span 2;">
+            <div id="progressBar"></div>
         </div>
     </div>
 
     <div class="glass-card">
-        <div class="input-group">
-            <label>Početni kapital</label>
-            <input type="number" id="initBanka" placeholder="1000" oninput="setup()">
+        <label>Osnovni parametri</label>
+        <div class="stat-grid">
+            <input type="number" id="targetProfit" placeholder="Cilj profit" oninput="saveAndCalc()">
+            <input type="number" id="odds" value="2.00" step="0.01" oninput="saveAndCalc()">
         </div>
-        <div class="input-group">
-            <label>Ciljani profit po betu</label>
-            <input type="number" id="initProfit" placeholder="100" oninput="calculate()">
-        </div>
-        <div class="input-group">
-            <label>Sledeća kvota</label>
-            <input type="number" id="trenutnaKvota" value="2.00" step="0.01" oninput="calculate()">
-        </div>
+        <input type="number" id="baseBank" placeholder="Početna Banka (samo prvi put)" onchange="initBank()">
     </div>
 
-    <div class="main-calc">
-        <div class="stat-label">Preporučen sledeći ulog</div>
-        <div id="nextBet" class="suggested-bet">0.00</div>
+    <div class="main-display">
+        <div class="stat-label">Sledeći ulog</div>
+        <div id="betDisp" class="bet-amt">0</div>
     </div>
 
-    <div class="action-btns">
-        <button class="btn-win" onclick="handleResult(true)">Dobitak</button>
-        <button class="btn-lose" onclick="handleResult(false)">Gubitak</button>
+    <div class="btn-grid">
+        <button class="btn-win" onclick="record(true)">WIN</button>
+        <button class="btn-lose" onclick="record(false)">LOSE</button>
     </div>
 
-    <div id="log" class="history-msg">Spreman za početak.</div>
-    <button class="btn-reset" onclick="resetAll()">Resetuj sve podatke</button>
+    <div class="glass-card" style="margin-top:20px; padding: 15px;">
+        <div class="stat-label" style="margin-bottom:10px;">Poslednji tiketi</div>
+        <div id="history" class="history-list"></div>
+    </div>
+
+    <div class="glass-card calendar-section">
+        <div class="stat-label" style="margin-bottom:15px; display: flex; justify-content: space-between;">
+            <span>Istorija po danima</span>
+            <span style="color: var(--accent); cursor: pointer;" onclick="arhivirajDan()">Završi dan</span>
+        </div>
+        <div id="calendarList">
+            </div>
+    </div>
+
+    <div class="reset-link" onclick="hardReset()">Resetuj kompletnu memoriju aplikacije</div>
 </div>
 
 <script>
-    let banka = 0;
-    let minus = 0;
-    let profitPoBetu = 0;
+    let state = JSON.parse(localStorage.getItem('betState')) || {
+        banka: 0,
+        minus: 0,
+        initial: 0,
+        history: [],
+        dailyLog: [] // Struktura: { datum: 'DD.MM.YYYY', profit: 0, banka: 0 }
+    };
 
-    function setup() {
-        banka = parseFloat(document.getElementById('initBanka').value) || 0;
-        updateUI();
-        calculate();
-    }
-
-    function calculate() {
-        profitPoBetu = parseFloat(document.getElementById('initProfit').value) || 0;
-        const kvota = parseFloat(document.getElementById('trenutnaKvota').value) || 1.01;
-        
-        if (kvota <= 1) {
-            document.getElementById('nextBet').innerText = "0.00";
-            return;
+    function initBank() {
+        const val = parseFloat(document.getElementById('baseBank').value);
+        if(val) {
+            state.banka = val;
+            state.initial = val;
+            saveAndCalc();
         }
-
-        // Formula za progresiju: (Dug + Cilj) / (Kvota - 1)
-        const ulog = (minus + profitPoBetu) / (kvota - 1);
-        document.getElementById('nextBet').innerText = ulog > 0 ? ulog.toFixed(2) : "0.00";
     }
 
-    function handleResult(isWin) {
-        const ulog = parseFloat(document.getElementById('nextBet').innerText);
-        const kvota = parseFloat(document.getElementById('trenutnaKvota').value);
+    function saveAndCalc() {
+        const target = parseFloat(document.getElementById('targetProfit').value) || 0;
+        const odds = parseFloat(document.getElementById('odds').value) || 1.01;
         
-        if (ulog <= 0 || isNaN(ulog)) return;
+        const ulog = (state.minus + target) / (odds - 1);
+        document.getElementById('betDisp').innerText = ulog > 0 ? ulog.toFixed(2) : "0";
+        
+        updateUI();
+        localStorage.setItem('betState', JSON.stringify(state));
+    }
 
-        if (isWin) {
-            banka += (ulog * (kvota - 1));
-            minus = 0;
-            document.getElementById('log').innerText = "✅ Profit ostvaren, minus je obrisan!";
-            document.getElementById('log').style.color = "var(--accent)";
+    function record(win) {
+        const ulog = parseFloat(document.getElementById('betDisp').innerText);
+        const odds = parseFloat(document.getElementById('odds').value);
+        if(ulog <= 0) return;
+
+        if(win) {
+            const profit = ulog * (odds - 1);
+            state.banka += profit;
+            state.history.unshift({t: 'DOBITAK', a: profit.toFixed(2), c: 'var(--accent)'});
+            state.minus = 0;
         } else {
-            banka -= ulog;
-            minus += ulog;
-            document.getElementById('log').innerText = "❌ Gubitak! Sistem proračunava oporavak...";
-            document.getElementById('log').style.color = "var(--error)";
+            state.banka -= ulog;
+            state.minus += ulog;
+            state.history.unshift({t: 'GUBITAK', a: ulog.toFixed(2), c: 'var(--error)'});
         }
+
+        state.history = state.history.slice(0, 5);
+        saveAndCalc();
+    }
+
+    // Funkcija koja ručno ili automatski arhivira trenutni dan
+    function arhivirajDan() {
+        const danas = new Date().toLocaleDateString('sr-RS', { day: 'numeric', month: 'numeric', year: 'numeric' });
         
-        updateUI();
-        calculate();
+        // Računamo dnevni profit u odnosu na početno stanje pre nego što smo počeli dan
+        const dnevniProfit = state.banka - state.initial;
+
+        // Provera da li već imamo upisan današnji dan da ga ne dupliramo, nego ažuriramo
+        const index = state.dailyLog.findIndex(item => item.datum === danas);
+        if (index !== -1) {
+            state.dailyLog[index] = { datum: danas, profit: dnevniProfit, banka: state.banka };
+        } else {
+            state.dailyLog.unshift({ datum: danas, profit: dnevniProfit, banka: state.banka });
+        }
+
+        // Postavljamo novu "početnu banku" za sutra na trenutnu vrednost
+        state.initial = state.banka;
+        document.getElementById('baseBank').value = state.banka.toFixed(2);
+        
+        alert(`Dan arhiviran! Početna banka za naredni period je postavljena na: ${state.banka.toFixed(2)}`);
+        saveAndCalc();
     }
 
     function updateUI() {
-        document.getElementById('displayBanka').innerText = banka.toLocaleString(undefined, {minimumFractionDigits: 2});
-        document.getElementById('displayMinus').innerText = minus.toLocaleString(undefined, {minimumFractionDigits: 2});
-    }
+        document.getElementById('bankaDisp').innerText = state.banka.toFixed(2);
+        document.getElementById('minusDisp').innerText = state.minus.toFixed(2);
+        
+        // Progress bar logika
+        if(state.initial > 0) {
+            let p = (state.banka / state.initial) * 100;
+            document.getElementById('progressBar').style.width = Math.min(p, 100) + "%";
+            document.getElementById('progressBar').style.background = state.banka >= state.initial ? 'var(--accent)' : 'var(--error)';
+        }
 
-    function resetAll() {
-        if(confirm("Pažnja: Ovo će resetovati tvoju banku i minus na nulu. Nastaviti?")) {
-            minus = 0;
-            document.getElementById('initBanka').value = "";
-            document.getElementById('initProfit').value = "";
-            setup();
+        // Render brze istorije poslednjih tiketa
+        document.getElementById('history').innerHTML = state.history.map(i => `
+            <div class="history-item">
+                <span>${i.t}</span>
+                <span style="color:${i.c}">${i.c.includes('accent') ? '+' : '-'}${i.a}</span>
+            </div>
+        `).join('');
+
+        // Render kalendara po danima
+        if (state.dailyLog.length === 0) {
+            document.getElementById('calendarList').innerHTML = `<div style="text-align:center; color:#475569; font-size:12px;">Još uvek nema arhiviranih dana.</div>`;
+        } else {
+            document.getElementById('calendarList').innerHTML = state.dailyLog.map(d => {
+                const klasa = d.profit >= 0 ? 'profit' : 'loss';
+                const znak = d.profit >= 0 ? '+' : '';
+                return `
+                    <div class="calendar-item ${klasa}">
+                        <div>
+                            <div style="font-weight:bold; color: #fff;">${znak}${d.profit.toFixed(2)}</div>
+                            <div class="date-badge">${d.datum}</div>
+                        </div>
+                        <div style="font-size:12px; color:#94a3b8;">Banka: ${d.banka.toFixed(2)}</div>
+                    </div>
+                `;
+            }).join('');
         }
     }
 
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
+    function hardReset() {
+        if(confirm("Brišeš sve podatke i kalendar iz memorije telefona?")) {
+            localStorage.clear();
+            location.reload();
+        }
     }
+
+    updateUI();
+    saveAndCalc();
 </script>
 </body>
 </html>

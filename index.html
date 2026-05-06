@@ -3,212 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BetAlgo Ultra Pro</title>
+    <title>BetAlgo Pro Tracker</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <style>
         :root {
             --bg: #0f172a;
+            --accent: #10b981;
+            --error: #ef4444;
             --glass: rgba(30, 41, 59, 0.7);
-            --accent: #38bdf8;
-            --neon: #00f2ff;
             --text: #f1f5f9;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(circle at bottom left, #1e293b, #0f172a);
             color: var(--text);
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
+            -webkit-user-select: none;
         }
 
-        /* Header sa staklenim efektom */
-        .header {
-            position: fixed;
-            top: 0; width: 100%;
+        .container {
+            width: 100%; max-width: 450px; padding: 20px; box-sizing: border-box;
+        }
+
+        .glass-card {
             background: var(--glass);
             backdrop-filter: blur(15px);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            z-index: 100;
-            padding: 15px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
         }
 
-        .input-container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 0 15px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+        .header-stats {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
         }
 
-        .field { display: flex; flex-direction: column; }
-        label { font-size: 10px; text-transform: uppercase; color: var(--accent); font-weight: bold; margin-bottom: 4px; letter-spacing: 1px; }
-        
+        .stat-box { text-align: center; }
+        .stat-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; margin-bottom: 5px; }
+        .stat-value { font-size: 22px; font-weight: 800; color: var(--accent); }
+
+        .input-group { margin-top: 15px; }
+        label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 6px; text-transform: uppercase; }
         input {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            border-radius: 8px;
-            padding: 10px;
-            color: white;
-            font-size: 14px;
-            outline: none;
+            width: 100%; background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 14px; color: white;
+            font-size: 16px; outline: none; box-sizing: border-box;
             transition: 0.3s;
         }
+        input:focus { border-color: var(--accent); background: rgba(15, 23, 42, 1); }
 
-        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
-
-        .search-box {
-            grid-column: span 3;
-            margin-top: 10px;
-            background: rgba(255,255,255,0.05);
-            border: none;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Rezultati */
-        .scroll-area {
-            margin-top: 185px;
-            height: calc(100vh - 185px);
-            overflow-y: auto;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-
-        .results-grid {
-            max-width: 500px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .category {
-            grid-column: span 2;
-            font-size: 12px;
-            font-weight: 800;
-            color: #64748b;
+        .main-calc { text-align: center; padding: 25px 0; border: 2px dashed rgba(255,255,255,0.05); margin: 20px 0; border-radius: 24px; }
+        .suggested-bet { font-size: 54px; font-weight: 900; color: #fff; margin: 10px 0; letter-spacing: -2px; }
+        
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        button {
+            padding: 18px; border: none; border-radius: 16px; font-weight: 800;
+            font-size: 15px; cursor: pointer; transition: transform 0.1s, opacity 0.2s;
             text-transform: uppercase;
-            margin: 15px 0 5px;
-            display: flex;
-            align-items: center;
+        }
+        button:active { transform: scale(0.96); }
+        
+        .btn-win { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .btn-lose { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        .btn-reset { 
+            background: transparent; border: 1px solid rgba(255,255,255,0.1); 
+            color: #64748b; width: 100%; margin-top: 25px; padding: 12px; font-size: 12px;
         }
 
-        .category::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.1); margin-left: 10px; }
-
-        .card {
-            background: var(--glass);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 12px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent);
-        }
-
-        .game-n { font-size: 11px; color: #94a3b8; margin-bottom: 5px; }
-        .val-row { display: flex; justify-content: space-between; align-items: center; }
-        .odds { font-size: 18px; font-weight: 800; color: #fff; }
-        .prob { font-size: 10px; color: var(--neon); opacity: 0.8; }
-
-        ::-webkit-scrollbar { width: 0px; }
+        .history-msg { font-size: 13px; color: #94a3b8; margin-top: 15px; text-align: center; font-style: italic; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="input-container">
-        <div class="field"><label>Ishod 1</label><input type="number" id="k1" value="2.00" oninput="calc()"></div>
-        <div class="field"><label>Ishod X</label><input type="number" id="kx" value="3.30" oninput="calc()"></div>
-        <div class="field"><label>Ishod 2</label><input type="number" id="k2" value="3.60" oninput="calc()"></div>
-        <div class="field"><label>UG 0-2</label><input type="number" id="k02" value="1.85" oninput="calc()"></div>
-        <div class="field"><label>UG 3+</label><input type="number" id="k3p" value="1.95" oninput="calc()"></div>
-        <div class="field"><label>GG</label><input type="number" id="kgg" value="1.75" oninput="calc()"></div>
-        <input type="text" id="srch" class="search-box" placeholder="Pretraži 600+ igara..." onkeyup="filter()">
+<div class="container">
+    <div style="text-align: center; margin-bottom: 25px;">
+        <h2 style="margin:0; font-weight: 800; letter-spacing: -1px;">PROGRESIVNI <span style="color:var(--accent)">BET</span></h2>
+        <span style="font-size: 10px; color: #64748b; text-transform: uppercase;">Sistem za oporavak banke</span>
     </div>
-</div>
 
-<div class="scroll-area">
-    <div class="results-grid" id="out"></div>
+    <div class="glass-card header-stats">
+        <div class="stat-box">
+            <div class="stat-label">Trenutno u banci</div>
+            <div id="displayBanka" class="stat-value">0.00</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Akumuliran minus</div>
+            <div id="displayMinus" class="stat-value" style="color: var(--error)">0.00</div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="input-group">
+            <label>Početni kapital</label>
+            <input type="number" id="initBanka" placeholder="1000" oninput="setup()">
+        </div>
+        <div class="input-group">
+            <label>Ciljani profit po betu</label>
+            <input type="number" id="initProfit" placeholder="100" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>Sledeća kvota</label>
+            <input type="number" id="trenutnaKvota" value="2.00" step="0.01" oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="main-calc">
+        <div class="stat-label">Preporučen sledeći ulog</div>
+        <div id="nextBet" class="suggested-bet">0.00</div>
+    </div>
+
+    <div class="action-btns">
+        <button class="btn-win" onclick="handleResult(true)">Dobitak</button>
+        <button class="btn-lose" onclick="handleResult(false)">Gubitak</button>
+    </div>
+
+    <div id="log" class="history-msg">Spreman za početak.</div>
+    <button class="btn-reset" onclick="resetAll()">Resetuj sve podatke</button>
 </div>
 
 <script>
-    function factorial(n) { return n <= 1 ? 1 : n * factorial(n - 1); }
-    function poisson(l, k) { return (Math.pow(l, k) * Math.exp(-l)) / factorial(k); }
+    let banka = 0;
+    let minus = 0;
+    let profitPoBetu = 0;
 
-    function calc() {
-        const v = {
-            k1: parseFloat(document.getElementById('k1').value) || 2,
-            kx: parseFloat(document.getElementById('kx').value) || 3,
-            k2: parseFloat(document.getElementById('k2').value) || 3,
-            k02: parseFloat(document.getElementById('k02').value) || 1.8,
-            k3p: parseFloat(document.getElementById('k3p').value) || 2,
-            gg: parseFloat(document.getElementById('kgg').value) || 1.7
-        };
+    function setup() {
+        banka = parseFloat(document.getElementById('initBanka').value) || 0;
+        updateUI();
+        calculate();
+    }
 
-        const m = (1/v.k1) + (1/v.kx) + (1/v.k2);
-        const p1 = (1/v.k1)/m, px = (1/v.kx)/m, p2 = (1/v.k2)/m;
-        const lambda = -Math.log((1/v.k02) / ((1/v.k02) + 1/v.k3p)) * 1.35;
-
-        const matrix = [];
-        for(let h=0; h<7; h++) {
-            for(let a=0; a<7; a++) {
-                matrix.push({h, a, p: poisson(lambda * (p1 + px/2), h) * poisson(lambda * (p2 + px/2), a)});
-            }
+    function calculate() {
+        profitPoBetu = parseFloat(document.getElementById('initProfit').value) || 0;
+        const kvota = parseFloat(document.getElementById('trenutnaKvota').value) || 1.01;
+        
+        if (kvota <= 1) {
+            document.getElementById('nextBet').innerText = "0.00";
+            return;
         }
 
-        let h = "";
-        const cat = (t) => h += `<div class="category">${t}</div>`;
-        const game = (n, u) => {
-            const pr = matrix.filter(u).reduce((s, x) => s + x.p, 0);
-            const q = (1 / (pr * 0.93)).toFixed(2);
-            if(q < 100) h += `<div class="card"><span class="game-n">${n}</span><div class="val-row"><span class="odds">${q}</span><span class="prob">${(pr*100).toFixed(1)}%</span></div></div>`;
-        };
+        // Formula za progresiju: (Dug + Cilj) / (Kvota - 1)
+        const ulog = (minus + profitPoBetu) / (kvota - 1);
+        document.getElementById('nextBet').innerText = ulog > 0 ? ulog.toFixed(2) : "0.00";
+    }
 
-        cat("Konačan Ishod");
-        game("Pobeda Domaćina (1)", r => r.h > r.a);
-        game("Nerešeno (X)", r => r.h == r.a);
-        game("Pobeda Gosta (2)", r => r.h < r.a);
+    function handleResult(isWin) {
+        const ulog = parseFloat(document.getElementById('nextBet').innerText);
+        const kvota = parseFloat(document.getElementById('trenutnaKvota').value);
         
-        cat("Golovi - Azijski & Standard");
-        [0.5, 1.5, 2.5, 3.5, 4.5, 5.5].forEach(l => {
-            game(`Više od ${l}`, r => (r.h+r.a) > l);
-            game(`Manje od ${l}`, r => (r.h+r.a) < l);
-        });
+        if (ulog <= 0 || isNaN(ulog)) return;
 
-        cat("Kombinacije (1,X,2 & Golovi)");
-        game("1 & 3+", r => r.h > r.a && (r.h+r.a) > 2.5);
-        game("X & 0-2", r => r.h == r.a && (r.h+r.a) < 2.5);
-        game("2 & 3+", r => r.h < r.a && (r.h+r.a) > 2.5);
-        game("1 & GG", r => r.h > r.a && r.h > 0 && r.a > 0);
-        game("1X & 2+", r => r.h >= r.a && (r.h+r.a) > 1.5);
-
-        cat("Tačan Rezultat");
-        matrix.sort((a,b)=>b.p-a.p).slice(0,12).forEach(r => {
-            game(`Rezultat ${r.h}:${r.a}`, x => x.h==r.h && x.a==r.a);
-        });
-
-        document.getElementById('out').innerHTML = h;
+        if (isWin) {
+            banka += (ulog * (kvota - 1));
+            minus = 0;
+            document.getElementById('log').innerText = "✅ Profit ostvaren, minus je obrisan!";
+            document.getElementById('log').style.color = "var(--accent)";
+        } else {
+            banka -= ulog;
+            minus += ulog;
+            document.getElementById('log').innerText = "❌ Gubitak! Sistem proračunava oporavak...";
+            document.getElementById('log').style.color = "var(--error)";
+        }
+        
+        updateUI();
+        calculate();
     }
 
-    function filter() {
-        let q = document.getElementById('srch').value.toLowerCase();
-        document.querySelectorAll('.card').forEach(c => {
-            c.style.display = c.innerText.toLowerCase().includes(q) ? "flex" : "none";
-        });
+    function updateUI() {
+        document.getElementById('displayBanka').innerText = banka.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('displayMinus').innerText = minus.toLocaleString(undefined, {minimumFractionDigits: 2});
     }
 
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
-    calc();
+    function resetAll() {
+        if(confirm("Pažnja: Ovo će resetovati tvoju banku i minus na nulu. Nastaviti?")) {
+            minus = 0;
+            document.getElementById('initBanka').value = "";
+            document.getElementById('initProfit').value = "";
+            setup();
+        }
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
 </script>
 </body>
 </html>

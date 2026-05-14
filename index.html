@@ -91,11 +91,41 @@
         .date-badge { font-size: 11px; color: #64748b; font-weight: bold; }
         
         .reset-link { color: #475569; font-size: 11px; text-align: center; margin-top: 30px; cursor: pointer; text-decoration: underline; }
+
+        /* Stilovi za Login ekran */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .btn-login {
+            background: var(--accent);
+            color: #fff;
+            width: 100%;
+            margin-top: 15px;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div id="loginScreen" class="login-container">
+    <div class="glass-card" style="width: 100%; text-align: center;">
+        <div class="stat-label" style="font-size: 14px; margin-bottom: 10px;">Zastićen pristup</div>
+        <h2 style="margin: 0 0 20px 0; font-weight: 900; letter-spacing: 1px;">BetAlgo Elite</h2>
+        <input type="password" id="passwordInput" placeholder="Unesite pristupnu lozinku">
+        <button class="btn-login" onclick="checkPassword()">PRISTUPI</button>
+        <p id="errorMsg" style="color: var(--error); font-size: 13px; margin-top: 15px; display: none; font-weight: bold;">Pogrešna lozinka! Pristup odbijen.</p>
+    </div>
+</div>
+
+<div id="appScreen" class="container" style="display: none;">
     <div class="glass-card stat-grid">
         <div class="stat-box">
             <div class="stat-label">Banka</div>
@@ -140,13 +170,42 @@
             <span style="color: var(--accent); cursor: pointer;" onclick="arhivirajDan()">Završi dan</span>
         </div>
         <div id="calendarList">
-            </div>
+        </div>
     </div>
 
     <div class="reset-link" onclick="hardReset()">Resetuj kompletnu memoriju aplikacije</div>
 </div>
 
 <script>
+    // --- SISTEM ZA ZAKLJUČAVANJE (AUTENTIFIKACIJA) ---
+    const TAJNA_LOZINKA = "BetAlgo2026"; // Ovde upiši lozinku koju želiš
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (localStorage.getItem("bet_authenticated") === "true") {
+            prikaziAplikaciju();
+        }
+    });
+
+    function checkPassword() {
+        const unesenaLozinka = document.getElementById("passwordInput").value;
+        const errorMsg = document.getElementById("errorMsg");
+
+        if (unesenaLozinka === TAJNA_LOZINKA) {
+            localStorage.setItem("bet_authenticated", "true");
+            prikaziAplikaciju();
+        } else {
+            errorMsg.style.display = "block";
+            document.getElementById("passwordInput").value = "";
+        }
+    }
+
+    function prikaziAplikaciju() {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appScreen").style.display = "block";
+    }
+
+
+    // --- TVOJA LOGIKA KALKULATORA ---
     let state = JSON.parse(localStorage.getItem('betState')) || {
         banka: 0,
         minus: 0,
@@ -195,14 +254,11 @@
         saveAndCalc();
     }
 
-    // Funkcija koja ručno ili automatski arhivira trenutni dan
     function arhivirajDan() {
         const danas = new Date().toLocaleDateString('sr-RS', { day: 'numeric', month: 'numeric', year: 'numeric' });
         
-        // Računamo dnevni profit u odnosu na početno stanje pre nego što smo počeli dan
         const dnevniProfit = state.banka - state.initial;
 
-        // Provera da li već imamo upisan današnji dan da ga ne dupliramo, nego ažuriramo
         const index = state.dailyLog.findIndex(item => item.datum === danas);
         if (index !== -1) {
             state.dailyLog[index] = { datum: danas, profit: dnevniProfit, banka: state.banka };
@@ -210,7 +266,6 @@
             state.dailyLog.unshift({ datum: danas, profit: dnevniProfit, banka: state.banka });
         }
 
-        // Postavljamo novu "početnu banku" za sutra na trenutnu vrednost
         state.initial = state.banka;
         document.getElementById('baseBank').value = state.banka.toFixed(2);
         
@@ -222,14 +277,12 @@
         document.getElementById('bankaDisp').innerText = state.banka.toFixed(2);
         document.getElementById('minusDisp').innerText = state.minus.toFixed(2);
         
-        // Progress bar logika
         if(state.initial > 0) {
             let p = (state.banka / state.initial) * 100;
             document.getElementById('progressBar').style.width = Math.min(p, 100) + "%";
             document.getElementById('progressBar').style.background = state.banka >= state.initial ? 'var(--accent)' : 'var(--error)';
         }
 
-        // Render brze istorije poslednjih tiketa
         document.getElementById('history').innerHTML = state.history.map(i => `
             <div class="history-item">
                 <span>${i.t}</span>
@@ -237,7 +290,6 @@
             </div>
         `).join('');
 
-        // Render kalendara po danima
         if (state.dailyLog.length === 0) {
             document.getElementById('calendarList').innerHTML = `<div style="text-align:center; color:#475569; font-size:12px;">Još uvek nema arhiviranih dana.</div>`;
         } else {

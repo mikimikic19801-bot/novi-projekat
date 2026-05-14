@@ -179,10 +179,10 @@
 <script>
     // --- BAZA KORISNIKA SA UKUPNIM TRAJANJEM LICENCE U MINUTIMA ---
     const KORISNICKI_KLJUCEVI = {
-        "BrziTest_3min": 3,      // Korisnik 1: Šifra za tvoj brzi test, ističe za 3 minuta
-        "Proba_10min": 10,       // Korisnik 2: Šifra za standardni probni period od 10 minuta
-        "Miki_Elite_30d": 43200, // Korisnik 3: Kupac Miki, licenca traje mesec dana (43200 min)
-        "Deki_Algo_30d": 43200   // Korisnik 4: Kupac Deki, licenca traje mesec dana (43200 min)
+        "BrziTest_2min": 2,      // Šifra za brzi test, ističe za 3 minuta bez refresha
+        "Proba_10min": 10,       // Šifra za standardni probni period od 10 minuta
+        "Miki_Elite_30d": 43200, // Kupac Miki, licenca traje mesec dana (43200 min)
+        "Deki_Algo_30d": 43200   // Kupac Deki, licenca traje mesec dana (43200 min)
     };
 
     // Sigurnosna kočnica: Odjava sa sistema na svakih 24 sata (1440 minuta)
@@ -190,28 +190,36 @@
     const MAKS_TRAJANJE_SESIJE = 1440; 
 
     document.addEventListener("DOMContentLoaded", function() {
+        // Prva provera odmah pri učitavanju stranice
         proveriStatusPristupa();
+
+        // AKTIVNI TAJMER: Proveravaj vreme na svake 3 sekunde (3000 milisekundi)
+        // Ako vreme istekne dok korisnik radi u aplikaciji, odmah ga izbacuje!
+        setInterval(function() {
+            proveriStatusPristupa();
+        }, 3000); 
     });
 
     function proveriStatusPristupa() {
         const sacuvaniKljuc = localStorage.getItem("bet_user_key");
         const vremeLogovanja = localStorage.getItem("bet_login_time");
 
-        if (sacuvaniKljuc && vremeLogovanja) {
+        // Proveravamo status samo ako je korisnik ulogovan i kalkulator je vidljiv na ekranu
+        if (sacuvaniKljuc && vremeLogovanja && document.getElementById("appScreen").style.display === "block") {
             const sada = Date.now();
             const prosloMinuta = (sada - parseInt(vremeLogovanja)) / 60000;
 
-            // 1. Provera da li ključ i dalje postoji u kodu (ako si ga obrisao u međuvremenu)
+            // 1. Provera da li ključ i dalje postoji u kodu
             if (!KORISNICKI_KLJUCEVI.hasOwnProperty(sacuvaniKljuc)) {
-                izbaciKorisnika();
+                izbaciKorisnika("Vaš ključ više nije validan!");
                 return;
             }
 
             const ukupnoDozvoljenoMinuta = KORISNICKI_KLJUCEVI[sacuvaniKljuc];
 
-            // 2. Provera ukupnog isteka licence (npr. prošlo više od 3 minuta ili više od 30 dana)
+            // 2. Provera ukupnog isteka licence
             if (prosloMinuta > ukupnoDozvoljenoMinuta) {
-                izbaciKorisnika("Vaš probni period ili licenca su istekli!");
+                izbaciKorisnika("Vaš probni period ili licenca su upravo istekli!");
                 return;
             }
 
@@ -223,9 +231,6 @@
                 document.getElementById("errorMsg").innerText = "Sesija je istekla nakon 24h. Unesite šifru ponovo.";
                 return;
             }
-
-            // Ako su sve 3 provere prošle, otključaj kalkulator
-            prikaziAplikaciju();
         }
     }
 

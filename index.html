@@ -117,11 +117,11 @@
 
 <div id="loginScreen" class="login-container">
     <div class="glass-card" style="width: 100%; text-align: center;">
-        <div class="stat-label" style="font-size: 14px; margin-bottom: 10px;">Zastićen pristup</div>
+        <div class="stat-label" style="font-size: 14px; margin-bottom: 10px;">Zaštićen pristup</div>
         <h2 style="margin: 0 0 20px 0; font-weight: 900; letter-spacing: 1px;">BetAlgo Elite</h2>
-        <input type="password" id="passwordInput" placeholder="Unesite pristupnu lozinku">
+        <input type="password" id="passwordInput" placeholder="Unesite vašu šifru">
         <button class="btn-login" onclick="checkPassword()">PRISTUPI</button>
-        <p id="errorMsg" style="color: var(--error); font-size: 13px; margin-top: 15px; display: none; font-weight: bold;">Pogrešna lozinka! Pristup odbijen.</p>
+        <p id="errorMsg" style="color: var(--error); font-size: 13px; margin-top: 15px; display: none; font-weight: bold;"></p>
     </div>
 </div>
 
@@ -177,26 +177,65 @@
 </div>
 
 <script>
-    // --- SISTEM ZA ZAKLJUČAVANJE (AUTENTIFIKACIJA) ---
-    const TAJNA_LOZINKA = "BetAlgo2026"; // Ovde upiši lozinku koju želiš
+    // --- BAZA KORISNIKA, ŠIFARA I DATUMA ISTEKA ---
+    // Format datuma MORA biti GGGG-MM-DD
+    const KORISNICKI_KLJUCEVI = {
+        "Miki_Prog_77": "2026-06-15",   // Ističe 15. juna 2026.
+        "SifraKupca2": "2026-06-20",    // Ističe 20. juna 2026.
+        "SifraKupca3": "2026-07-01",    // Ističe 1. jula 2026.
+        "TestJedanDan": "2026-05-15"    // Primer šifre koja brzo ističe
+        // Ovde samo dodaješ nove redove na isti način za ostalih 50 ljudi...
+    };
 
     document.addEventListener("DOMContentLoaded", function() {
-        if (localStorage.getItem("bet_authenticated") === "true") {
-            prikaziAplikaciju();
+        const sacuvaniKljuc = localStorage.getItem("bet_user_key");
+        if (sacuvaniKljuc) {
+            const status = proveriValidnostKljuca(sacuvaniKljuc);
+            if (status.validan) {
+                prikaziAplikaciju();
+            } else {
+                localStorage.removeItem("bet_user_key");
+                localStorage.removeItem("bet_authenticated");
+            }
         }
     });
 
     function checkPassword() {
-        const unesenaLozinka = document.getElementById("passwordInput").value;
+        const unetiKljuc = document.getElementById("passwordInput").value.trim();
         const errorMsg = document.getElementById("errorMsg");
+        const status = proveriValidnostKljuca(unetiKljuc);
 
-        if (unesenaLozinka === TAJNA_LOZINKA) {
+        if (status.validan) {
+            localStorage.setItem("bet_user_key", unetiKljuc);
             localStorage.setItem("bet_authenticated", "true");
             prikaziAplikaciju();
         } else {
             errorMsg.style.display = "block";
+            errorMsg.innerText = status.poruka;
             document.getElementById("passwordInput").value = "";
         }
+    }
+
+    function proveriValidnostKljuca(kljuc) {
+        // Provera da li ključ uopšte postoji u listi
+        if (!KORISNICKI_KLJUCEVI.hasOwnProperty(kljuc)) {
+            return { validan: false, poruka: "Pogrešna šifra! Pristup odbijen." };
+        }
+
+        // Provera datuma isteka
+        const datumIstekaString = KORISNICKI_KLJUCEVI[kljuc];
+        const datumIsteka = new Date(datumIstekaString);
+        const danasnjiDatum = new Date();
+
+        // Resetovanje sati radi tačnog poređenja dana
+        danasnjiDatum.setHours(0,0,0,0);
+        datumIsteka.setHours(0,0,0,0);
+
+        if (danasnjiDatum > datumIsteka) {
+            return { validan: false, poruka: "Vaša šifra je istekla! Obnovite pristup." };
+        }
+
+        return { validan: true, poruka: "" };
     }
 
     function prikaziAplikaciju() {
@@ -205,13 +244,13 @@
     }
 
 
-    // --- TVOJA LOGIKA KALKULATORA ---
+    // --- TVOJA LOGIKA KALKULATORA (NE MENJA SE) ---
     let state = JSON.parse(localStorage.getItem('betState')) || {
         banka: 0,
         minus: 0,
         initial: 0,
         history: [],
-        dailyLog: [] // Struktura: { datum: 'DD.MM.YYYY', profit: 0, banka: 0 }
+        dailyLog: []
     };
 
     function initBank() {
@@ -256,7 +295,6 @@
 
     function arhivirajDan() {
         const danas = new Date().toLocaleDateString('sr-RS', { day: 'numeric', month: 'numeric', year: 'numeric' });
-        
         const dnevniProfit = state.banka - state.initial;
 
         const index = state.dailyLog.findIndex(item => item.datum === danas);
@@ -310,8 +348,9 @@
     }
 
     function hardReset() {
-        if(confirm("Brišeš sve podatke i kalendar iz memorije telefona?")) {
-            localStorage.clear();
+        if(confirm("Brišeš sve podatke i kalendar iz memorije? Korisnički pristup ostaje sačuvan.")) {
+            // Čistimo samo podatke kalkulatora, ostavljamo autorizaciju netaknutu
+            localStorage.removeItem('betState');
             location.reload();
         }
     }

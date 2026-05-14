@@ -177,65 +177,100 @@
 </div>
 
 <script>
-    // --- BAZA KORISNIKA, ŠIFARA I DATUMA ISTEKA ---
-    // Format datuma MORA biti GGGG-MM-DD
+    // --- BAZA KORISNIKA SA UKUPNIM TRAJANJEM LICENCE U MINUTIMA ---
     const KORISNICKI_KLJUCEVI = {
-        "Miki_Prog_77": "2026-06-15",   // Ističe 15. juna 2026.
-        "SifraKupca2": "2026-06-20",    // Ističe 20. juna 2026.
-        "SifraKupca3": "2026-07-01",    // Ističe 1. jula 2026.
-        "TestJedanDan": "2026-05-15"    // Primer šifre koja brzo ističe
-        // Ovde samo dodaješ nove redove na isti način za ostalih 50 ljudi...
+        "BrziTest_3min": 3,      // Korisnik 1: Šifra za tvoj brzi test, ističe za 3 minuta
+        "Proba_10min": 10,       // Korisnik 2: Šifra za standardni probni period od 10 minuta
+        "Miki_Elite_30d": 43200, // Korisnik 3: Kupac Miki, licenca traje mesec dana (43200 min)
+        "Deki_Algo_30d": 43200   // Korisnik 4: Kupac Deki, licenca traje mesec dana (43200 min)
     };
 
+    // Sigurnosna kočnica: Odjava sa sistema na svakih 24 sata (1440 minuta)
+    // Bez obzira što licenca traje 30 dana, korisnik mora da unese šifru opet na svaka 24h
+    const MAKS_TRAJANJE_SESIJE = 1440; 
+
     document.addEventListener("DOMContentLoaded", function() {
-        const sacuvaniKljuc = localStorage.getItem("bet_user_key");
-        if (sacuvaniKljuc) {
-            const status = proveriValidnostKljuca(sacuvaniKljuc);
-            if (status.validan) {
-                prikaziAplikaciju();
-            } else {
-                localStorage.removeItem("bet_user_key");
-                localStorage.removeItem("bet_authenticated");
-            }
-        }
+        proveriStatusPristupa();
     });
+
+    function proveriStatusPristupa() {
+        const sacuvaniKljuc = localStorage.getItem("bet_user_key");
+        const vremeLogovanja = localStorage.getItem("bet_login_time");
+
+        if (sacuvaniKljuc && vremeLogovanja) {
+            const sada = Date.now();
+            const prosloMinuta = (sada - parseInt(vremeLogovanja)) / 60000;
+
+            // 1. Provera da li ključ i dalje postoji u kodu (ako si ga obrisao u međuvremenu)
+            if (!KORISNICKI_KLJUCEVI.hasOwnProperty(sacuvaniKljuc)) {
+                izbaciKorisnika();
+                return;
+            }
+
+            const ukupnoDozvoljenoMinuta = KORISNICKI_KLJUCEVI[sacuvaniKljuc];
+
+            // 2. Provera ukupnog isteka licence (npr. prošlo više od 3 minuta ili više od 30 dana)
+            if (prosloMinuta > ukupnoDozvoljenoMinuta) {
+                izbaciKorisnika("Vaš probni period ili licenca su istekli!");
+                return;
+            }
+
+            // 3. Provera 24-časovnog ograničenja sesije
+            if (prosloMinuta > MAKS_TRAJANJE_SESIJE) {
+                document.getElementById("loginScreen").style.display = "block";
+                document.getElementById("appScreen").style.display = "none";
+                document.getElementById("errorMsg").style.display = "block";
+                document.getElementById("errorMsg").innerText = "Sesija je istekla nakon 24h. Unesite šifru ponovo.";
+                return;
+            }
+
+            // Ako su sve 3 provere prošle, otključaj kalkulator
+            prikaziAplikaciju();
+        }
+    }
 
     function checkPassword() {
         const unetiKljuc = document.getElementById("passwordInput").value.trim();
         const errorMsg = document.getElementById("errorMsg");
-        const status = proveriValidnostKljuca(unetiKljuc);
 
-        if (status.validan) {
+        if (KORISNICKI_KLJUCEVI.hasOwnProperty(unetiKljuc)) {
+            const sacuvaniKljuc = localStorage.getItem("bet_user_key");
+            
+            // Ako je ovo prvo logovanje ikada ili je uneta nova/drugačija šifra
+            if (sacuvaniKljuc !== unetiKljuc) {
+                localStorage.setItem("bet_login_time", Date.now().toString());
+            } else {
+                // Ako unosi istu šifru nakon 24h, proveravamo da li je u međuvremenu skroz istekla licenca
+                const vremeLogovanja = localStorage.getItem("bet_login_time");
+                const prosloMinuta = (Date.now() - parseInt(vremeLogovanja)) / 60000;
+                if (prosloMinuta > KORISNICKI_KLJUCEVI[unetiKljuc]) {
+                    errorMsg.style.display = "block";
+                    errorMsg.innerText = "Licenca za ovu šifru je trajno istekla!";
+                    return;
+                }
+                // Ako je licenca živa, osvežavamo vreme sesije za narednih 24h
+                localStorage.setItem("bet_login_time", Date.now().toString());
+            }
+
             localStorage.setItem("bet_user_key", unetiKljuc);
-            localStorage.setItem("bet_authenticated", "true");
+            errorMsg.style.display = "none";
             prikaziAplikaciju();
         } else {
             errorMsg.style.display = "block";
-            errorMsg.innerText = status.poruka;
+            errorMsg.innerText = "Pogrešna šifra! Pristup odbijen.";
             document.getElementById("passwordInput").value = "";
         }
     }
 
-    function proveriValidnostKljuca(kljuc) {
-        // Provera da li ključ uopšte postoji u listi
-        if (!KORISNICKI_KLJUCEVI.hasOwnProperty(kljuc)) {
-            return { validan: false, poruka: "Pogrešna šifra! Pristup odbijen." };
+    function izbaciKorisnika(poruka = "") {
+        localStorage.removeItem("bet_user_key");
+        localStorage.removeItem("bet_login_time");
+        document.getElementById("loginScreen").style.display = "block";
+        document.getElementById("appScreen").style.display = "none";
+        if (poruka) {
+            document.getElementById("errorMsg").style.display = "block";
+            document.getElementById("errorMsg").innerText = poruka;
         }
-
-        // Provera datuma isteka
-        const datumIstekaString = KORISNICKI_KLJUCEVI[kljuc];
-        const datumIsteka = new Date(datumIstekaString);
-        const danasnjiDatum = new Date();
-
-        // Resetovanje sati radi tačnog poređenja dana
-        danasnjiDatum.setHours(0,0,0,0);
-        datumIsteka.setHours(0,0,0,0);
-
-        if (danasnjiDatum > datumIsteka) {
-            return { validan: false, poruka: "Vaša šifra je istekla! Obnovite pristup." };
-        }
-
-        return { validan: true, poruka: "" };
     }
 
     function prikaziAplikaciju() {
@@ -349,7 +384,6 @@
 
     function hardReset() {
         if(confirm("Brišeš sve podatke i kalendar iz memorije? Korisnički pristup ostaje sačuvan.")) {
-            // Čistimo samo podatke kalkulatora, ostavljamo autorizaciju netaknutu
             localStorage.removeItem('betState');
             location.reload();
         }
